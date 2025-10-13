@@ -74,8 +74,8 @@ RUN mkdir -p /root/.vnc
 RUN echo "phishing123" | vncpasswd -f > /root/.vnc/passwd \
     && chmod 600 /root/.vnc/passwd
 
-# Create startup script
-RUN echo '#!/bin/bash\n\
+# Create startup script with proper multi-line syntax
+RUN printf '#!/bin/bash\n\
 # Update config.js with backend URL from environment\n\
 if [ ! -z "$API_BASE_URL" ]; then\n\
   sed -i "s|http://localhost:8000|$API_BASE_URL|g" /home/chrome/extension/config.js\n\
@@ -94,22 +94,22 @@ DISPLAY=:1 openbox &\n\
 sleep 2\n\
 \n\
 # Launch Chrome with extension loaded\n\
-DISPLAY=:1 google-chrome \
---no-sandbox \
---disable-dev-shm-usage \
---disable-gpu \
---load-extension=/home/chrome/extension \
---start-maximized \
---no-first-run \
---no-default-browser-check \
---disable-features=TranslateUI \
---disable-infobars \
---user-data-dir=/home/chrome/.config/google-chrome \
-https://www.facebook.com &\n\
+DISPLAY=:1 google-chrome \\\n\
+  --no-sandbox \\\n\
+  --disable-dev-shm-usage \\\n\
+  --disable-gpu \\\n\
+  --load-extension=/home/chrome/extension \\\n\
+  --disable-extensions-except=/home/chrome/extension \\\n\
+  --start-maximized \\\n\
+  --no-first-run \\\n\
+  --no-default-browser-check \\\n\
+  --disable-features=TranslateUI \\\n\
+  --disable-infobars \\\n\
+  --user-data-dir=/home/chrome/.config/google-chrome \\\n\
+  https://www.facebook.com &\n\
 \n\
 # Keep container running\n\
-tail -f /dev/null\n\
-' > /start.sh && chmod +x /start.sh
+tail -f /dev/null\n' > /start.sh && chmod +x /start.sh
 
 # Expose VNC port
 EXPOSE 5901
