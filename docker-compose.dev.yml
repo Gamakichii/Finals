@@ -18,7 +18,5 @@ services:
 
   frontend:
     environment:
-      # Development API URL (if running backend locally)
-      - API_BASE_URL=http://backend:8080
-      # Enable verbose logging
-      - SE_OPTS=--log-level DEBUG
+      # Development API URL (match backend service port)
+      - API_BASE_URL=http://backend:8000

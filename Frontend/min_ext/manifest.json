@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "MV3 Hello",
+  "version": "1.0.0",
+  "description": "Minimal MV3 test extension to verify unpacked loading.",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "MV3 Hello"
+  }
+}

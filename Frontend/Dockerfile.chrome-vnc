@@ -47,6 +47,7 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     python3-numpy \
+    jq \
     && rm -rf /var/lib/apt/lists/*
 
 # Install noVNC for web-based VNC access
@@ -74,51 +75,58 @@ RUN mkdir -p /root/.vnc
 RUN echo "phishing123" | vncpasswd -f > /root/.vnc/passwd \
     && chmod 600 /root/.vnc/passwd
 
-# Create startup script with proper multi-line syntax
+# Create startup script that copies extension to a secure path with safe permissions
 RUN printf '#!/bin/bash\n\
-# Update config.js with backend URL from environment\n\
-if [ ! -z "$API_BASE_URL" ]; then\n\
-  sed -i "s|http://localhost:8000|$API_BASE_URL|g" /home/chrome/extension/config.js\n\
+# Update config.js with backend URL from environment (skip if read-only mount)\n\
+if [ -n "$API_BASE_URL" ] && [ -w /home/chrome/extension/config.js ]; then\n\
+  sed -i "s|http://backend:8000|$API_BASE_URL|g" /home/chrome/extension/config.js || true\n\
+  sed -i "s|http://localhost:8000|$API_BASE_URL|g" /home/chrome/extension/config.js || true\n\
 fi\n\
-\n\
+\
+# Prepare a secure copy of the extension (Chrome may refuse world-writable mounts)\n\
+rm -rf /opt/extension && mkdir -p /opt/extension\n\
+cp -r /home/chrome/extension/. /opt/extension/ || true\n\
+find /opt/extension -type d -exec chmod 755 {} \; || true\n\
+find /opt/extension -type f -exec chmod 644 {} \; || true\n\
+\
 # Start VNC server\n\
 vncserver :1 -geometry 1920x1080 -depth 24 -SecurityTypes None &\n\
 sleep 3\n\
-\n\
+\
 # Start noVNC web server\n\
 /opt/noVNC/utils/novnc_proxy --vnc localhost:5901 --listen 6080 &\n\
 sleep 2\n\
-\n\
+\
 # Start Openbox window manager\n\
 DISPLAY=:1 openbox &\n\
 sleep 2\n\
-\n\
-# Launch Chrome with extension loaded\n\
-DISPLAY=:1 google-chrome \\\n\
-  --no-sandbox \\\n\
-  --disable-dev-shm-usage \\\n\
-  --disable-gpu \\\n\
-  --load-extension=/home/chrome/extension \\\n\
-  --disable-extensions-except=/home/chrome/extension \\\n\
-  --start-maximized \\\n\
-  --no-first-run \\\n\
-  --no-default-browser-check \\\n\
-  --disable-features=TranslateUI \\\n\
-  --disable-infobars \\\n\
-  --user-data-dir=/home/chrome/.config/google-chrome \\\n\
-  https://www.facebook.com &\n\
-\n\
+\
+# Create Chrome profile directory and enable Developer Mode\n\
+mkdir -p /home/chrome/.config/google-chrome/Default\n\
+echo '\''{"extensions":{"ui":{"developer_mode":true}}}'\'' > /home/chrome/.config/google-chrome/Default/Preferences\n\
+\
+# Launch Chrome FIRST TIME to initialize profile (without extension)\n\
+echo "Initializing Chrome profile..."\n\
+DISPLAY=:1 timeout 15 google-chrome \\\n  --no-sandbox \\\n  --disable-dev-shm-usage \\\n  --disable-gpu \\\n  --start-maximized \\\n  --no-first-run \\\n  --no-default-browser-check \\\n  --user-data-dir=/home/chrome/.config/google-chrome \\\n  about:blank || true\n\
+\
+# Wait for Chrome processes to fully stop\n\
+echo "Waiting for Chrome to fully initialize..."\n\
+sleep 3\n\
+pkill -9 chrome || true\n\
+sleep 2\n\
+# Clear Chrome profile locks if any persisted\n\
+rm -f /home/chrome/.config/google-chrome/Singleton* || true\n\
+rm -f /home/chrome/.config/google-chrome/Default/LOCK || true\n\
+\
+# Launch Chrome with extension and persistent profile\n\
+echo "Starting Chrome with extension..."\n\
+DISPLAY=:1 google-chrome \\\n  --no-sandbox \\\n  --disable-dev-shm-usage \\\n  --disable-gpu \\\n  --start-maximized \\\n  --no-first-run \\\n  --no-default-browser-check \\\n  --user-data-dir=/home/chrome/.config/google-chrome \\\n  --remote-debugging-port=9222 \\\n  --load-extension=/opt/extension \\\n  --enable-logging=stderr \\\n  --v=1 \\\n  chrome://extensions/ https://www.facebook.com &\n\
+\
 # Keep container running\n\
 tail -f /dev/null\n' > /start.sh && chmod +x /start.sh
 
-# Expose VNC port
-EXPOSE 5901
-
-# Expose noVNC web interface port
-EXPOSE 6080
-
-# Expose Chrome remote debugging port (optional)
-EXPOSE 9222
+# Expose ports
+EXPOSE 5901 6080 9222
 
 # Set working directory
 WORKDIR /home/chrome

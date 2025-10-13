@@ -52,6 +52,10 @@ services:
     volumes:
       # Persist Chrome user data
       - chrome-data:/home/chrome/.config/google-chrome
+      # Mount the unpacked extension for live reload and reliable loading
+      - ./Frontend/extension_dist:/home/chrome/extension:ro
+      # Mount minimal MV3 test extension
+      - ./Frontend/min_ext:/home/chrome/min_ext:ro
 
 networks:
   phishing-detector-network:

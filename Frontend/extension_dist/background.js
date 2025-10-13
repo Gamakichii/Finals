@@ -6,8 +6,8 @@ const appId = 'ads-phishing-link'; // Use your Firestore/Google project ID
 // Backend API base URL (can be overridden via `chrome.storage.sync` key `api_base_url`)
 // Default to Docker service name 'backend' when running in Docker, otherwise use production URL
 const DEFAULT_API_BASE_URL = typeof window !== 'undefined' && window.EXTENSION_CONFIG 
-  ? window.EXTENSION_CONFIG.API_BASE_URL 
-  : "http://backend:8080";
+    ? window.EXTENSION_CONFIG.API_BASE_URL 
+    : "http://backend:8000";
   
 let API_BASE_URL = DEFAULT_API_BASE_URL;
 

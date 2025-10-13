@@ -16,6 +16,7 @@
     "http://127.0.0.1:80/*",
     "https://dakugumen-thesis-qxtmk.ondigitalocean.app/*",
     "http://backend:8080/*",
+    "http://backend:8000/*",
     "http://localhost:8080/*"
   ],
   "background": {
