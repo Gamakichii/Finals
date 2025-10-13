@@ -1,0 +1,24 @@
+# Docker Compose Override for Development
+# This file provides development-specific configurations
+# Use: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  backend:
+    volumes:
+      # Mount source code for live reload during development
+      - ./Backend:/app
+    environment:
+      # Enable debug mode
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    # Override command to use Flask development server with auto-reload
+    command: python -u app.py
+
+  frontend:
+    environment:
+      # Development API URL (if running backend locally)
+      - API_BASE_URL=http://backend:8080
+      # Enable verbose logging
+      - SE_OPTS=--log-level DEBUG

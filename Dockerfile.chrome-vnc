@@ -1,0 +1,96 @@
+# Use Ubuntu as base image with desktop environment support
+FROM ubuntu:22.04
+
+# Avoid prompts from apt
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Set display for VNC
+ENV DISPLAY=:1
+
+# Install required packages
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg \
+    ca-certificates \
+    fonts-liberation \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libatspi2.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libdrm2 \
+    libgbm1 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libwayland-client0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxkbcommon0 \
+    libxrandr2 \
+    xdg-utils \
+    tigervnc-standalone-server \
+    tigervnc-common \
+    dbus-x11 \
+    x11-xserver-utils \
+    xfonts-base \
+    xfonts-75dpi \
+    xfonts-100dpi \
+    openbox \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Google Chrome
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create directory for Chrome extension
+RUN mkdir -p /home/chrome/extension
+
+# Copy the unpacked extension from build context
+COPY ./extension_dist /home/chrome/extension
+
+# Create VNC password directory
+RUN mkdir -p /root/.vnc
+
+# Set VNC password (default: 'password' - change this for security)
+RUN echo "password" | vncpasswd -f > /root/.vnc/passwd \
+    && chmod 600 /root/.vnc/passwd
+
+# Create startup script
+RUN echo '#!/bin/bash\n\
+# Start VNC server\n\
+vncserver :1 -geometry 1920x1080 -depth 24 -SecurityTypes None &\n\
+sleep 2\n\
+\n\
+# Start Openbox window manager\n\
+DISPLAY=:1 openbox &\n\
+sleep 1\n\
+\n\
+# Launch Chrome with extension loaded\n\
+DISPLAY=:1 google-chrome \
+--no-sandbox \
+--disable-dev-shm-usage \
+--disable-gpu \
+--load-extension=/home/chrome/extension \
+--start-maximized \
+--no-first-run \
+--no-default-browser-check \
+about:blank &\n\
+\n\
+# Keep container running\n\
+tail -f /dev/null\n\
+' > /start.sh && chmod +x /start.sh
+
+# Expose VNC port
+EXPOSE 5901
+
+# Set working directory
+WORKDIR /home/chrome
+
+# Start the services
+CMD ["/start.sh"]

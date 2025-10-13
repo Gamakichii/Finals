@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing Detector</title>
+    <!-- Local CSS to avoid MV3 CSP issues -->
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body class="bg-gray-100 p-4 rounded-lg shadow-lg">
+    <div class="container">
+        <div class="header">
+            Phishing Detector
+        </div>
+
+        <div id="status" class="status-message status-info">
+            Automatically scanning for phishing posts
+        </div>
+
+    <button id="viewFlaggedButton" class="button button-primary">View Flagged Links</button>
+
+    <div class="user-id-display mt-4">
+        User ID: <span id="userIdDisplay">Loading...</span>
+    </div>
+    </div>
+
+    <!-- Correctly reference popup.js as an external script -->
+    <script src="popup.js"></script>
+</body>
+</html>
