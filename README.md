@@ -303,13 +303,9 @@ docker network inspect finals_phishing-detector-network
 - Firestore credentials should be kept secure (use environment variables)
 - Consider adding authentication for production deployments
 
-## 📝 License
-
-[Your License Here]
-
 ## 👥 Contributors
 
-[Your Name/Team]
+DaKuGuMen
 
 ## 🙋 Support
 
