@@ -1,0 +1,56 @@
+# Docker Compose file for pulling pre-built images
+# Use this file on other PCs to avoid building images locally
+# Run with: docker compose -f docker-compose.pull.yml up -d
+
+services:
+  # Backend Flask API
+  backend:
+    image: ${DOCKER_USERNAME:-gamamochi}/phishing-detector-backend:latest
+    container_name: phishing-detector-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - PYTHONUNBUFFERED=1
+      - RESOLVE_SHORTENERS=1
+      - AE_WEIGHT=0.6
+      - FINAL_SCORE_CUTOFF=0.5
+      - AE_THRESHOLD_MULTIPLIER=1.0
+    networks:
+      - phishing-detector-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # Frontend Chrome Extension with VNC
+  frontend:
+    image: ${DOCKER_USERNAME:-gamamochi}/phishing-detector-frontend:latest
+    container_name: phishing-detector-frontend
+    ports:
+      - "6080:6080"  # noVNC web interface (access via browser)
+      - "5901:5901"  # VNC port (optional, for VNC clients)
+      - "9222:9222"  # Chrome remote debugging port (optional)
+    environment:
+      - API_BASE_URL=http://backend:8000
+      - DISPLAY=:1
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - phishing-detector-network
+    restart: unless-stopped
+    shm_size: 2gb  # Increase shared memory for Chrome
+    volumes:
+      # Persist Chrome user data
+      - chrome-data:/home/chrome/.config/google-chrome
+
+networks:
+  phishing-detector-network:
+    driver: bridge
+
+volumes:
+  chrome-data:

@@ -16,6 +16,44 @@ This project consists of a Flask backend API for phishing detection and a Chrome
 
 ## 🚀 Quick Start
 
+### Option A: Pull Pre-built Images (⭐ Recommended - No Build Required!)
+
+**Perfect for running on other PCs or quick deployment!**
+
+The images are already available on Docker Hub at:
+- `gamamochi/phishing-detector-backend:latest`
+- `gamamochi/phishing-detector-frontend:latest`
+
+**Simple 3-step setup:**
+
+1. **Clone the repository:**
+```powershell
+git clone https://github.com/Gamakichii/Finals.git
+cd Finals
+```
+
+2. **Pull and run the containers:**
+```powershell
+docker compose -f docker-compose.pull.yml up -d
+```
+
+3. **Access the application:**
+   - Open your browser and go to: **http://localhost:6080**
+   - The Chrome browser with the phishing detector extension will load automatically!
+
+**Stopping the application:**
+```powershell
+docker compose -f docker-compose.pull.yml down
+```
+
+**📖 For more details, see [DOCKER_HUB_SETUP.md](DOCKER_HUB_SETUP.md)**
+
+---
+
+### Option B: Build from Source (Development)
+
+Use this option if you want to modify the code or build the images yourself.
+
 ### 1. Clone or navigate to the project directory
 
 ```powershell
